@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>🧩 Picture Puzzle</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f0f0f0;
+      text-align: center;
+      padding: 20px;
+      position: relative;
+    }
+    h1 {
+      margin-bottom: 10px;
+    }
+    #puzzle {
+      width: 300px;
+      height: 300px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      gap: 2px;
+      background: #333;
+      border: 4px solid #333;
+    }
+    .tile {
+      width: 100px;
+      height: 100px;
+      background-image: url('https://picsum.photos/id/237/300/300');
+      background-size: 300px 300px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .empty {
+      background: white;
+      background-image: none !important;
+      cursor: default;
+    }
+    .selected {
+      border: 4px solid yellow;
+      box-sizing: border-box;
+    }
+    #message {
+      margin-top: 15px;
+      font-weight: bold;
+      font-size: 18px;
+      color: green;
+    }
+    button {
+      margin-top: 15px;
+      padding: 8px 16px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    /* ✅ Instruction box */
+    #instructions {
+      position: absolute;
+      top: 30px;
+      right: 30px;
+      background: #fffbe6;
+      border: 1px solid #999;
+      padding: 12px 16px;
+      border-radius: 8px;
+      width: 220px;
+      text-align: left;
+      font-size: 14px;
+      box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+    }
+    #instructions h3 {
+      margin-top: 0;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>🧩 Picture Puzzle</h1>
+<div id="puzzle"></div>
+<button onclick="shuffleTiles()">🔀 Shuffle</button>
+<div id="message"></div>
+
+<!-- ✅ Instruction Box -->
+<div id="instructions">
+  <h3>📌 How to Play</h3>
+  <ul>
+    <li>Click a tile to <strong>select</strong> it</li>
+    <li>Use the <strong>arrow keys</strong> to move</li>
+    <li>Only moves into empty space are allowed</li>
+    <li>Solve the image to win 🎉</li>
+  </ul>
+</div>
+
+<script>
+  const puzzle = document.getElementById('puzzle');
+  const message = document.getElementById('message');
+  const size = 3;
+  const total = size * size;
+  let tiles = [];
+  let selectedTile = null;
+
+  function createTiles() {
+    tiles = [];
+    for (let i = 0; i < total; i++) {
+      const tile = {
+        element: document.createElement('div'),
+        correctIndex: i
+      };
+      tile.element.classList.add('tile');
+      tile.element.dataset.correctIndex = i;
+
+      if (i === total - 1) {
+        tile.element.classList.add('empty');
+      } else {
+        const x = (i % size) * -100;
+        const y = Math.floor(i / size) * -100;
+        tile.element.style.backgroundPosition = `${x}px ${y}px`;
+      }
+
+      tiles.push(tile);
+    }
+    drawTiles();
+  }
+
+  function drawTiles() {
+    puzzle.innerHTML = '';
+    tiles.forEach((tileObj, index) => {
+      const el = tileObj.element;
+      el.classList.remove('selected');
+
+      if (selectedTile === tileObj) {
+        el.classList.add('selected');
+      }
+
+      el.onclick = () => {
+        if (!el.classList.contains('empty')) {
+          selectedTile = tileObj;
+          drawTiles();
+        }
+      };
+
+      puzzle.appendChild(el);
+    });
+  }
+
+  function moveSelected(direction) {
+    if (!selectedTile) return;
+
+    const selectedIndex = tiles.indexOf(selectedTile);
+    const emptyIndex = tiles.findIndex(t => t.element.classList.contains('empty'));
+
+    const sx = selectedIndex % size;
+    const sy = Math.floor(selectedIndex / size);
+    const ex = emptyIndex % size;
+    const ey = Math.floor(emptyIndex / size);
+
+    let canMove = false;
+    if (direction === 'ArrowUp' && sx === ex && sy - 1 === ey) canMove = true;
+    else if (direction === 'ArrowDown' && sx === ex && sy + 1 === ey) canMove = true;
+    else if (direction === 'ArrowLeft' && sy === ey && sx - 1 === ex) canMove = true;
+    else if (direction === 'ArrowRight' && sy === ey && sx + 1 === ex) canMove = true;
+
+    if (canMove) {
+      [tiles[selectedIndex], tiles[emptyIndex]] = [tiles[emptyIndex], tiles[selectedIndex]];
+      selectedTile = tiles[emptyIndex];
+      drawTiles();
+      checkWin();
+    }
+  }
+
+  function checkWin() {
+    for (let i = 0; i < total; i++) {
+      if (tiles[i].correctIndex != i) return;
+    }
+    message.textContent = '🎉 Congratulations! You solved the puzzle!';
+  }
+
+  function shuffleTiles() {
+    message.textContent = '';
+    selectedTile = null;
+    for (let i = 0; i < 200; i++) {
+      const emptyIndex = tiles.findIndex(t => t.element.classList.contains('empty'));
+      const moves = getValidMoves(emptyIndex);
+      const random = moves[Math.floor(Math.random() * moves.length)];
+      [tiles[random], tiles[emptyIndex]] = [tiles[emptyIndex], tiles[random]];
+    }
+    drawTiles();
+  }
+
+  function getValidMoves(emptyIndex) {
+    const moves = [];
+    const row = Math.floor(emptyIndex / size);
+    const col = emptyIndex % size;
+    if (row > 0) moves.push(emptyIndex - size);
+    if (row < size - 1) moves.push(emptyIndex + size);
+    if (col > 0) moves.push(emptyIndex - 1);
+    if (col < size - 1) moves.push(emptyIndex + 1);
+    return moves;
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+      e.preventDefault();
+      moveSelected(e.key);
+    }
+  });
+
+  createTiles();
+</script>
+
+</body>
+</html>

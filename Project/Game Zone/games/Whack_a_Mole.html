@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Whack-a-Mouse 🐭</title>
+  <style>
+    body {
+      text-align: center;
+      font-family: 'Segoe UI', sans-serif;
+      background: #fef6dc;
+    }
+
+    h1 {
+      font-size: 3rem;
+      margin-top: 1rem;
+    }
+
+    #score-board {
+      font-size: 1.5rem;
+      margin: 10px;
+    }
+
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      grid-gap: 15px;
+      justify-content: center;
+      margin: 30px auto;
+    }
+
+    .square {
+      width: 100px;
+      height: 100px;
+      background-color: #d3f4ff;
+      border-radius: 15px;
+      border: 2px solid #2c3e50;
+      position: relative;
+      cursor: pointer;
+      font-size: 2.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+    }
+
+    .mole {
+      animation: pop 0.3s ease-out;
+    }
+
+    @keyframes pop {
+      0% { transform: scale(0); opacity: 0; }
+      50% { transform: scale(1.2); opacity: 1; }
+      100% { transform: scale(1); }
+    }
+
+    #start-btn {
+      padding: 10px 20px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      background: #3498db;
+      color: white;
+      cursor: pointer;
+    }
+
+    #start-btn:hover {
+      background: #2980b9;
+    }
+
+    #message {
+      font-size: 1.5rem;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🐭 Whack-a-Mouse</h1>
+  <div id="score-board">Score: <span id="score">0</span> | Time Left: <span id="time-left">30</span></div>
+  <button id="start-btn">Start Game</button>
+
+  <div id="grid">
+    <div class="square" id="1"></div>
+    <div class="square" id="2"></div>
+    <div class="square" id="3"></div>
+    <div class="square" id="4"></div>
+    <div class="square" id="5"></div>
+    <div class="square" id="6"></div>
+    <div class="square" id="7"></div>
+    <div class="square" id="8"></div>
+    <div class="square" id="9"></div>
+  </div>
+
+  <div id="message"></div>
+
+  <script>
+    const squares = document.querySelectorAll('.square');
+    const scoreDisplay = document.getElementById('score');
+    const timeLeftDisplay = document.getElementById('time-left');
+    const message = document.getElementById('message');
+    const startBtn = document.getElementById('start-btn');
+
+    let score = 0;
+    let timeLeft = 30;
+    let hitPosition = null;
+    let moleTimerId;
+    let gameTimerId;
+    let moleSpeed = 500;
+
+    function randomSquare() {
+      squares.forEach(square => {
+        square.classList.remove('mole');
+        square.textContent = '';
+      });
+
+      const random = squares[Math.floor(Math.random() * squares.length)];
+      random.classList.add('mole');
+      random.textContent = '🐭';
+      hitPosition = random.id;
+    }
+
+    function adjustSpeed() {
+      clearInterval(moleTimerId);
+      moleSpeed = Math.max(300, 500 - Math.floor(score / 5) * 100);
+      moleTimerId = setInterval(randomSquare, moleSpeed);
+    }
+
+    squares.forEach(square => {
+      square.addEventListener('mousedown', () => {
+        if (square.id === hitPosition) {
+          score++;
+          scoreDisplay.textContent = score;
+          square.textContent = '';
+          hitPosition = null;
+          adjustSpeed();
+        }
+      });
+    });
+
+    function startGame() {
+      resetGame();
+      moleTimerId = setInterval(randomSquare, moleSpeed);
+      gameTimerId = setInterval(countDown, 1000);
+      message.textContent = '';
+      startBtn.disabled = true;
+    }
+
+    function countDown() {
+      timeLeft--;
+      timeLeftDisplay.textContent = timeLeft;
+
+      if (timeLeft === 0) {
+        clearInterval(gameTimerId);
+        clearInterval(moleTimerId);
+        message.textContent = `🎉 Game Over! Your score: ${score}`;
+        startBtn.textContent = 'Play Again';
+        startBtn.disabled = false;
+      }
+    }
+
+    function resetGame() {
+      score = 0;
+      timeLeft = 30;
+      moleSpeed = 500;
+      scoreDisplay.textContent = score;
+      timeLeftDisplay.textContent = timeLeft;
+    }
+
+    startBtn.addEventListener('click', startGame);
+  </script>
+</body>
+</html>

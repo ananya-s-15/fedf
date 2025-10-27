@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Number Guessing Game</title>
+  <style>
+    body {
+      background-color: antiquewhite;
+      font-size: 150%;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+
+    .center {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    button {
+      font-size: 1.2em;
+      padding: 10px 20px;
+      cursor: pointer;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      box-shadow: 2px 2px 10px rgba(0,0,0,0.2);
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    p {
+      margin: 10px 0;
+    }
+
+    #winScreen {
+      display: none;
+      height: 100vh;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      background-color: #fffacd;
+    }
+
+    #winScreen h1 {
+      color: #2e8b57;
+      font-size: 3em;
+      margin-bottom: 10px;
+    }
+
+    #winScreen p {
+      font-size: 1.5em;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="gameContent">
+    <p id="rog">NUMBER GUESSING GAME</p>
+    <div class="center">
+      <button id="START">Start</button>
+    </div>
+    <p id="fog"></p>
+    <p id="cat"></p>
+  </div>
+
+  <div id="winScreen">
+    <h1>🎉 You Win! 🎉</h1>
+    <p id="finalMessage"></p>
+    <p id="attemptMessage"></p>
+    <button onclick="restartGame()">Play Again</button>
+  </div>
+
+  <script>
+    let num;
+    let ans;
+    let att;
+    let temp;
+
+    function initGame() {
+      num = Math.floor(Math.random() * 100) + 1;
+      att = 0;
+      temp = true;
+      document.getElementById("fog").textContent = "";
+      document.getElementById("cat").textContent = "";
+    }
+
+    function showWinScreen() {
+      document.getElementById("gameContent").style.display = "none";
+      document.getElementById("winScreen").style.display = "flex";
+      document.getElementById("finalMessage").textContent = `The correct number was: ${num}`;
+      document.getElementById("attemptMessage").textContent = `You guessed it in ${att} attempts!`;
+    }
+
+    function restartGame() {
+      document.getElementById("winScreen").style.display = "none";
+      document.getElementById("gameContent").style.display = "block";
+      initGame();
+    }
+
+    document.getElementById("START").onclick = function () {
+      initGame();
+
+      while (temp) {
+        att++;
+        ans = window.prompt("Enter a number between 1 and 100:");
+
+        if (ans === null) {
+          // Cancel button pressed
+          break;
+        }
+
+        if (isNaN(ans)) {
+          window.alert("Entered value is not a valid number.");
+        } else if (ans < 1 || ans > 100) {
+          window.alert("Entered number is out of range.");
+        } else {
+          ans = Number(ans);
+          if (ans < num) {
+            window.alert("Too low! Try again.");
+          } else if (ans > num) {
+            window.alert("Too high! Try again.");
+          } else {
+            temp = false;
+            showWinScreen();
+            return;
+          }
+        }
+      }
+
+      if (!temp) {
+        document.getElementById("fog").textContent = `You guessed it correctly! Number = ${num}`;
+        document.getElementById("cat").textContent = `Attempts taken: ${att}`;
+      }
+    };
+  </script>
+
+</body>
+</html>

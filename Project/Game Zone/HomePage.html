@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Game Zone</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      text-align: center;
+      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+      color: #fff;
+      margin: 0;
+      padding: 2rem;
+    }
+
+    h1 {
+      font-size: 3rem;
+      margin-bottom: 0.5rem;
+      color: #00ffff;
+      text-shadow: 2px 2px #000;
+    }
+
+    p {
+      margin-bottom: 2rem;
+      color: #ccc;
+      font-size: x-large;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1.2rem;
+      max-width: 1000px;
+      margin: 2rem auto;
+      padding: 1rem;
+    }
+
+    .btn {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      text-decoration: none;
+      font-size: 1.1rem;
+      padding: 1.2rem;
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      transition: 0.3s ease-in-out;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .btn:hover {
+      background: rgba(0, 255, 255, 0.2);
+      transform: scale(1.05);
+      box-shadow: 0 6px 25px rgba(0, 255, 255, 0.3);
+    }
+
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 2rem;
+      }
+
+      .btn {
+        font-size: 1rem;
+        padding: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>🎮 Welcome To Game Zone</h1>
+  <br><br>
+  <p>Select A Game To Start Playing!</p>
+  <br><br>
+
+  <div class="buttons">
+    <a href="games/Snake.html" class="btn">🐍 Snake Game</a>
+    <a href="games/Rock_Paper_Scissors.html" class="btn">✊✋✌️ Rock Paper Scissors</a>
+    <a href="games/Memory_Cards.html" class="btn">🧠 Memory Cards</a>
+    <a href="games/Platform_Jump.html" class="btn">🦘 Platform Jump</a>
+    <a href="games/Flappy_Bird.html" class="btn">🐦 Flappy Bird</a>
+    <a href="games/Tic_Tac_Toe.html" class="btn">⭕❌ Tic Tac Toe</a>
+    <a href="games/Whack_a_Mole.html" class="btn">🔨 Whack a Mole</a>
+    <a href="games/Virus_Dodger.html" class="btn">🦠 Virus Dodger</a>
+    <a href="games/2048.html" class="btn">🔢 2048</a>
+    <a href="games/Picture_Puzzle.html" class="btn">🧩 Picture Puzzle</a>
+    <a href="games/Brick_Breaker.html" class="btn">🧱 Brick Breaker</a>
+    <a href="games/Number_Guessing.html" class="btn">🔢 Number Guessing</a>
+    <a href="games/Speed_Typing.html" class="btn">⌨️ Speed Typing</a>
+    <a href="games/Red_Ball.html" class="btn">🔴 Red Ball</a>
+  </div>
+</body>
+</html>

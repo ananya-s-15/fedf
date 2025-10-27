@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Brick Breaker</title>
+  <style>
+    body {
+      margin: 0;
+      background: #111;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    canvas {
+      background: #000;
+      display: block;
+      border: 2px solid white;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    canvas.width = 480;
+    canvas.height = 320;
+
+    let ballRadius = 10;
+    let x, y, dx, dy;
+
+    const paddleHeight = 10;
+    const paddleWidth = 75;
+    let paddleX;
+    let rightPressed = false;
+    let leftPressed = false;
+
+    const brickRowCount = 4;
+    const brickColumnCount = 6;
+    const brickWidth = 65;
+    const brickHeight = 20;
+    const brickPadding = 10;
+    const brickOffsetTop = 30;
+    const brickOffsetLeft = 20;
+
+    let bricks = [];
+    let brickColors = ["#FF4B2B", "#FF416C", "#FFCC70", "#6DD5FA", "#00B09B"];
+    let score;
+    let gameState = "playing";
+    let fireworks = [];
+
+    document.addEventListener("keydown", keyDownHandler);
+    document.addEventListener("keyup", keyUpHandler);
+
+    function keyDownHandler(e) {
+      if (e.key === "Right" || e.key === "ArrowRight") rightPressed = true;
+      else if (e.key === "Left" || e.key === "ArrowLeft") leftPressed = true;
+
+      if (gameState !== "playing" && e.key === "Enter") {
+        initGame();
+      }
+    }
+
+    function keyUpHandler(e) {
+      if (e.key === "Right" || e.key === "ArrowRight") rightPressed = false;
+      else if (e.key === "Left" || e.key === "ArrowLeft") leftPressed = false;
+    }
+
+    function initGame() {
+      x = canvas.width / 2;
+      y = canvas.height - 30;
+      dx = 3; // doubled from 2
+      dy = -3; // doubled from -2
+      paddleX = (canvas.width - paddleWidth) / 2;
+      score = 0;
+      gameState = "playing";
+      fireworks = [];
+
+      bricks = [];
+      for (let c = 0; c < brickColumnCount; c++) {
+        bricks[c] = [];
+        for (let r = 0; r < brickRowCount; r++) {
+          bricks[c][r] = {
+            x: 0,
+            y: 0,
+            status: 1,
+            color: brickColors[r % brickColors.length]
+          };
+        }
+      }
+    }
+
+    function createFirework() {
+      for (let i = 0; i < 30; i++) {
+        fireworks.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height / 2,
+          dx: (Math.random() - 0.5) * 4,
+          dy: (Math.random() - 0.5) * 4,
+          life: 50,
+          color: `hsl(${Math.random() * 360},100%,50%)`
+        });
+      }
+    }
+
+    function drawFireworks() {
+      fireworks.forEach((f, index) => {
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, 3, 0, Math.PI * 2);
+        ctx.fillStyle = f.color;
+        ctx.fill();
+        ctx.closePath();
+        f.x += f.dx;
+        f.y += f.dy;
+        f.life--;
+        if (f.life <= 0) fireworks.splice(index, 1);
+      });
+    }
+
+    function collisionDetection() {
+      for (let c = 0; c < brickColumnCount; c++) {
+        for (let r = 0; r < brickRowCount; r++) {
+          let b = bricks[c][r];
+          if (b.status === 1) {
+            if (x > b.x && x < b.x + brickWidth && y > b.y && y < b.y + brickHeight) {
+              dy = -dy;
+              b.status = 0;
+              score++;
+              if (score === brickRowCount * brickColumnCount) {
+                gameState = "win";
+                createFirework();
+              }
+            }
+          }
+        }
+      }
+    }
+
+    function drawBall() {
+      ctx.beginPath();
+      ctx.arc(x, y, ballRadius, 0, Math.PI * 2);
+      ctx.fillStyle = "#00ffcc";
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = "#00ffcc";
+      ctx.fill();
+      ctx.closePath();
+    }
+
+    function drawPaddle() {
+      ctx.beginPath();
+      ctx.rect(paddleX, canvas.height - paddleHeight - 2, paddleWidth, paddleHeight);
+      let gradient = ctx.createLinearGradient(paddleX, 0, paddleX + paddleWidth, 0);
+      gradient.addColorStop(0, "#ff9966");
+      gradient.addColorStop(1, "#ff5e62");
+      ctx.fillStyle = gradient;
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = "#ff5e62";
+      ctx.fill();
+      ctx.closePath();
+    }
+
+    function drawBricks() {
+      for (let c = 0; c < brickColumnCount; c++) {
+        for (let r = 0; r < brickRowCount; r++) {
+          if (bricks[c][r].status === 1) {
+            let brickX = (c * (brickWidth + brickPadding)) + brickOffsetLeft;
+            let brickY = (r * (brickHeight + brickPadding)) + brickOffsetTop;
+            bricks[c][r].x = brickX;
+            bricks[c][r].y = brickY;
+
+            ctx.beginPath();
+            ctx.rect(brickX, brickY, brickWidth, brickHeight);
+            let gradient = ctx.createLinearGradient(brickX, brickY, brickX, brickY + brickHeight);
+            gradient.addColorStop(0, bricks[c][r].color);
+            gradient.addColorStop(1, "#ffffff55");
+            ctx.fillStyle = gradient;
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = bricks[c][r].color;
+            ctx.fill();
+            ctx.closePath();
+          }
+        }
+      }
+    }
+
+    function drawScore() {
+      ctx.font = "16px Arial";
+      ctx.fillStyle = "#fff";
+      ctx.textAlign = "start";
+      ctx.fillText("Score: " + score, 8, 20);
+    }
+
+    function drawMessage() {
+      ctx.textAlign = "center";
+      if (gameState === "over") {
+        ctx.font = "26px Arial Black";
+        ctx.fillStyle = "#fdfffeff";
+        ctx.shadowColor = "#ffffffff";
+        ctx.shadowBlur = 25;
+        ctx.fillText("😢 GAME OVER!", canvas.width / 2, canvas.height / 2 - 20);
+        ctx.font = "18px Arial";
+        ctx.shadowBlur = 10;
+        ctx.fillStyle = "#ffffffff";
+        ctx.fillText("Press ENTER to Restart", canvas.width / 2, canvas.height / 2 + 20);
+      }
+      if (gameState === "win") {
+        ctx.font = "28px Arial Black";
+        ctx.fillStyle = "#FFD700";
+        ctx.shadowColor = "#FFD700";
+        ctx.shadowBlur = 25;
+        ctx.fillText("🏆 YOU WIN!", canvas.width / 2, canvas.height / 2 - 20);
+        ctx.font = "18px Arial";
+        ctx.shadowBlur = 10;
+        ctx.fillStyle = "#ffffff";
+        ctx.fillText("Press ENTER to Play Again", canvas.width / 2, canvas.height / 2 + 20);
+      }
+      ctx.textAlign = "start";
+      ctx.shadowBlur = 0;
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawBricks();
+      drawBall();
+      drawPaddle();
+      drawScore();
+      drawMessage();
+
+      if (gameState === "playing") {
+        collisionDetection();
+
+        if (x + dx > canvas.width - ballRadius || x + dx < ballRadius) dx = -dx;
+        if (y + dy < ballRadius) dy = -dy;
+        else if (y + dy > canvas.height - ballRadius) {
+          if (x > paddleX && x < paddleX + paddleWidth) {
+            dy = -dy;
+          } else {
+            gameState = "over";
+          }
+        }
+
+        x += dx;
+        y += dy;
+
+        if (rightPressed && paddleX < canvas.width - paddleWidth) paddleX += 5;
+        else if (leftPressed && paddleX > 0) paddleX -= 5;
+
+      } else if (gameState === "win") {
+        drawFireworks();
+      }
+
+      requestAnimationFrame(draw);
+    }
+
+    initGame();
+    draw();
+  </script>
+</body>
+</html>

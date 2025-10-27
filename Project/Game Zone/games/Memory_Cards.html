@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Memory Game</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #d0ebff; /* Light blue background */
+      color: #000;
+      text-align: center;
+    }
+
+    h1 {
+      margin-top: 20px;
+      font-size: 2.2rem;
+    }
+
+    .game-info {
+      margin: 10px 0;
+      font-size: 1.1rem;
+    }
+
+    select, button {
+      background: #fff;
+      color: #000;
+      border: 2px solid #000;
+      padding: 8px 14px;
+      font-size: 1rem;
+      border-radius: 6px;
+      margin: 10px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover, select:hover {
+      background: #000;
+      color: #fff;
+    }
+
+    #game-board {
+      width: 90%;
+      max-width: 600px;
+      margin: 20px auto;
+      display: grid;
+      gap: 6px;
+    }
+
+    .card {
+      width: 100%;
+      padding-top: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.5s;
+      cursor: pointer;
+    }
+
+    .card.flip {
+      transform: rotateY(180deg);
+    }
+
+    .card .front, .card .back {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      border-radius: 8px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 2.2rem;
+      backface-visibility: hidden;
+      border: 2px solid #000;
+    }
+
+    .card .front {
+      background: #fff;
+      transform: rotateY(180deg);
+    }
+
+    .card .back {
+      background: #000;
+      color: transparent;
+    }
+
+    /* Win Modal */
+    #win-modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+    }
+
+    .win-box {
+      background: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      color: #000;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    }
+
+    .win-box button {
+      margin-top: 15px;
+    }
+
+    @media (max-width: 500px) {
+      .card .front, .card .back {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Memory Match Game</h1>
+
+  <div class="game-info">
+    Level:
+    <select id="difficulty" onchange="startGame()">
+      <option value="easy">Easy (4 pairs)</option>
+      <option value="medium" selected>Medium (8 pairs)</option>
+      <option value="hard">Hard (12 pairs)</option>
+    </select>
+    |
+    Moves: <span id="moves">0</span> |
+    Time: <span id="timer">0s</span>
+  </div>
+
+  <div id="game-board"></div>
+
+  <button onclick="startGame()">Restart</button>
+
+  <!-- Win Modal -->
+  <div id="win-modal">
+    <div class="win-box">
+      <h2>🎉 You Win!</h2>
+      <p>Moves: <span id="win-moves"></span><br>Time: <span id="win-time"></span></p>
+      <button onclick="closeWin()">Play Again</button>
+    </div>
+  </div>
+
+  <script>
+    const emojis = ['🍎','🍌','🍇','🍓','🍍','🥝','🍒','🍑','🥥','🍉','🥭','🍋'];
+    let cardValues = [];
+    let firstCard = null;
+    let lockBoard = false;
+    let moves = 0;
+    let matches = 0;
+    let timer = 0;
+    let timerInterval;
+
+    const board = document.getElementById("game-board");
+    const movesEl = document.getElementById("moves");
+    const timerEl = document.getElementById("timer");
+    const winModal = document.getElementById("win-modal");
+    const winMoves = document.getElementById("win-moves");
+    const winTime = document.getElementById("win-time");
+
+    function startGame() {
+      const level = document.getElementById("difficulty").value;
+      const pairs = level === 'easy' ? 4 : level === 'hard' ? 12 : 8;
+      cardValues = shuffle([...emojis].slice(0, pairs).flatMap(e => [e, e]));
+
+      board.innerHTML = '';
+      moves = 0;
+      matches = 0;
+      timer = 0;
+      firstCard = null;
+      lockBoard = false;
+      winModal.style.display = 'none';
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        timer++;
+        timerEl.textContent = `${timer}s`;
+      }, 1000);
+      movesEl.textContent = moves;
+      timerEl.textContent = '0s';
+
+      board.style.gridTemplateColumns = `repeat(${Math.ceil(Math.sqrt(cardValues.length))}, 1fr)`;
+
+      cardValues.forEach(emoji => {
+        const card = document.createElement('div');
+        card.classList.add('card');
+        card.dataset.emoji = emoji;
+        card.innerHTML = `
+          <div class="front">${emoji}</div>
+          <div class="back"></div>
+        `;
+        card.addEventListener('click', () => flipCard(card));
+        board.appendChild(card);
+      });
+    }
+
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function flipCard(card) {
+      if (lockBoard || card.classList.contains('flip') || card === firstCard) return;
+      card.classList.add('flip');
+
+      if (!firstCard) {
+        firstCard = card;
+        return;
+      }
+
+      const secondCard = card;
+      moves++;
+      movesEl.textContent = moves;
+
+      if (firstCard.dataset.emoji === secondCard.dataset.emoji) {
+        matches++;
+        firstCard = null;
+        if (matches === cardValues.length / 2) {
+          clearInterval(timerInterval);
+          showWinPopup();
+        }
+      } else {
+        lockBoard = true;
+        setTimeout(() => {
+          firstCard.classList.remove('flip');
+          secondCard.classList.remove('flip');
+          firstCard = null;
+          lockBoard = false;
+        }, 800);
+      }
+    }
+
+    function showWinPopup() {
+      winMoves.textContent = moves;
+      winTime.textContent = `${timer}s`;
+      winModal.style.display = 'flex';
+    }
+
+    function closeWin() {
+      startGame();
+    }
+
+    startGame();
+  </script>
+
+</body>
+</html>

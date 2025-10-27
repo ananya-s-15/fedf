@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Platform Jumper Game</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #d0f0ff; /* light blue */
+      overflow: hidden;
+    }
+
+    #game {
+      position: relative;
+      width: 500px;
+      height: 700px;
+      margin: 20px auto;
+      border: 3px solid #000;
+      background: #d0f0ff;
+      overflow: hidden;
+    }
+
+    #player {
+      width: 40px;
+      height: 40px;
+      background-color: #000;
+      position: absolute;
+      bottom: 100px;
+      left: 230px;
+      border-radius: 10px;
+    }
+
+    .platform {
+      width: 80px;
+      height: 15px;
+      background-color: #333;
+      position: absolute;
+      border-radius: 6px;
+    }
+
+    #scoreBoard {
+      text-align: center;
+      font-size: 1.4rem;
+      margin-top: 10px;
+      color: #000;
+    }
+
+    #gameOver {
+      position: absolute;
+      width: 100%;
+      top: 40%;
+      text-align: center;
+      font-size: 2rem;
+      color: red;
+      font-weight: bold;
+      display: none;
+    }
+
+    #restartBtn {
+      margin-top: 15px;
+      padding: 10px 20px;
+      font-size: 1rem;
+      background: #000;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      display: none;
+    }
+
+    #restartBtn:hover {
+      background: #444;
+    }
+  </style>
+</head>
+<body>
+
+<div id="scoreBoard">Score: <span id="score">0</span></div>
+<div id="game">
+  <div id="player"></div>
+  <div id="gameOver">Game Over<br><button id="restartBtn">Restart</button></div>
+</div>
+
+<script>
+  const game = document.getElementById('game');
+  const player = document.getElementById('player');
+  const scoreDisplay = document.getElementById('score');
+  const gameOverText = document.getElementById('gameOver');
+  const restartBtn = document.getElementById('restartBtn');
+
+  let playerLeft = 230;
+  let playerBottom = 100;
+  let gravity = 0.9;
+  let isJumping = true;
+  let jumpSpeed = 0;
+  let score = 0;
+  let gameInterval;
+  let platforms = [];
+
+  const platformCount = 8;
+  const platformGap = 100;
+  const platformWidth = 80;
+  const platformHeight = 15;
+
+  function createPlatform(y) {
+    const platform = document.createElement('div');
+    platform.classList.add('platform');
+    platform.style.left = `${Math.random() * (game.clientWidth - platformWidth)}px`;
+    platform.style.bottom = `${y}px`;
+    game.appendChild(platform);
+    return platform;
+  }
+
+  function initPlatforms() {
+    platforms = [];
+    for (let i = 0; i < platformCount; i++) {
+      const gapY = i * platformGap;
+      const plat = createPlatform(gapY);
+      platforms.push(plat);
+    }
+  }
+
+  function jump() {
+    jumpSpeed = 20;
+    isJumping = true;
+  }
+
+  function fall() {
+    jumpSpeed -= gravity;
+    playerBottom += jumpSpeed;
+    if (jumpSpeed <= 0) {
+      isJumping = false;
+    }
+  }
+
+  function moveLeft() {
+    playerLeft -= 5;
+    if (playerLeft < 0) playerLeft = 0;
+    player.style.left = `${playerLeft}px`;
+  }
+
+  function moveRight() {
+    playerLeft += 5;
+    const maxRight = game.clientWidth - player.offsetWidth;
+    if (playerLeft > maxRight) playerLeft = maxRight;
+    player.style.left = `${playerLeft}px`;
+  }
+
+  let leftPressed = false;
+  let rightPressed = false;
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') leftPressed = true;
+    if (e.key === 'ArrowRight') rightPressed = true;
+  });
+
+  document.addEventListener('keyup', (e) => {
+    if (e.key === 'ArrowLeft') leftPressed = false;
+    if (e.key === 'ArrowRight') rightPressed = false;
+  });
+
+  function checkCollision() {
+    platforms.forEach(platform => {
+      const platRect = platform.getBoundingClientRect();
+      const playerRect = player.getBoundingClientRect();
+      const overlap =
+        playerRect.bottom >= platRect.top &&
+        playerRect.bottom <= platRect.top + 15 &&
+        playerRect.right >= platRect.left &&
+        playerRect.left <= platRect.right &&
+        jumpSpeed <= 0;
+
+      if (overlap) {
+        jump();
+        score += 10;
+        scoreDisplay.textContent = score;
+      }
+    });
+  }
+
+  function movePlatforms() {
+    platforms.forEach(platform => {
+      const currentBottom = parseFloat(platform.style.bottom);
+      platform.style.bottom = `${currentBottom - 2}px`;
+
+      if (currentBottom < -platformHeight) {
+        game.removeChild(platform);
+        platforms.shift();
+        const newPlatform = createPlatform(game.clientHeight);
+        platforms.push(newPlatform);
+      }
+    });
+  }
+
+  function updateGame() {
+    if (!isJumping) fall();
+    else jumpSpeed -= gravity;
+
+    playerBottom += jumpSpeed;
+    if (playerBottom < 0) playerBottom = 0;
+    player.style.bottom = `${playerBottom}px`;
+
+    if (leftPressed) moveLeft();
+    if (rightPressed) moveRight();
+
+    if (playerBottom <= 0) {
+      endGame();
+    }
+
+    movePlatforms();
+    checkCollision();
+  }
+
+  function startGame() {
+    playerLeft = 230;
+    playerBottom = 100;
+    score = 0;
+    scoreDisplay.textContent = 0;
+    gameOverText.style.display = 'none';
+    restartBtn.style.display = 'none';
+    isJumping = true;
+    jumpSpeed = 20;
+    player.style.left = `${playerLeft}px`;
+    player.style.bottom = `${playerBottom}px`;
+
+    game.querySelectorAll('.platform').forEach(p => game.removeChild(p));
+    initPlatforms();
+
+    clearInterval(gameInterval);
+    gameInterval = setInterval(updateGame, 20);
+  }
+
+  function endGame() {
+    clearInterval(gameInterval);
+    gameOverText.style.display = 'block';
+    restartBtn.style.display = 'inline-block';
+  }
+
+  restartBtn.addEventListener('click', startGame);
+
+  startGame();
+</script>
+
+</body>
+</html>

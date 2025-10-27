@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Rock Paper Scissors 3D</title>
+  <style>
+    body {
+      background: linear-gradient(-45deg, #0f0, #004400, #0a0, #001100);
+      background-size: 400% 400%;
+      animation: gradient 12s ease infinite;
+      font-family: 'Courier New', monospace;
+      color: #fff;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+
+    @keyframes gradient {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    h1 {
+      margin-top: 30px;
+      font-size: 2.5em;
+      color: #ffffff;
+      text-shadow: 2px 2px 5px #000;
+    }
+
+    .game-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 40px 20px;
+      gap: 50px;
+      flex-wrap: wrap;
+    }
+
+    .player, .computer {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .label {
+      margin-bottom: 15px;
+      font-size: 1.3em;
+      font-weight: bold;
+      color: #ffffff;
+    }
+
+    .hand {
+      font-size: 80px;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+      opacity: 0;
+    }
+
+    .hand.show {
+      opacity: 1;
+      transform: scale(1.1);
+    }
+
+    .buttons {
+      margin-top: 30px;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      background: #111;
+      border: 2px solid #0f0;
+      border-radius: 10px;
+      padding: 20px;
+      cursor: pointer;
+      font-size: 2.2em;
+      transition: transform 0.2s ease;
+      box-shadow: 0 0 10px #0f0;
+      color: #0f0;
+    }
+
+    .btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 15px #0f0;
+      background-color: #222;
+    }
+
+    #result {
+      font-size: 1.8em;
+      margin-top: 30px;
+      min-height: 50px;
+      text-shadow: 1px 1px #000;
+      color: #fff;
+    }
+
+    #score {
+      margin-top: 20px;
+      font-size: 1.2em;
+      color: #eee;
+    }
+
+    @media (max-width: 600px) {
+      .game-container {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Rock Paper Scissors</h1>
+
+  <div class="game-container">
+    <div class="player">
+      <div class="label">🧑 You</div>
+      <div id="playerHand" class="hand">❔</div>
+    </div>
+    <div class="computer">
+      <div class="label">🤖 Computer</div>
+      <div id="computerHand" class="hand">❔</div>
+    </div>
+  </div>
+
+  <div class="buttons">
+    <div class="btn" onclick="play('rock')" title="Rock">✊</div>
+    <div class="btn" onclick="play('paper')" title="Paper">✋</div>
+    <div class="btn" onclick="play('scissors')" title="Scissors">✌️</div>
+  </div>
+
+  <div id="result"></div>
+  <div id="score">You: 0 | Computer: 0</div>
+
+  <script>
+    const handEmojis = {
+      rock: "✊",
+      paper: "✋",
+      scissors: "✌️"
+    };
+
+    let userScore = 0;
+    let computerScore = 0;
+
+    function play(userChoice) {
+      const computerChoice = getComputerChoice();
+
+      showHand("playerHand", handEmojis[userChoice]);
+      showHand("computerHand", handEmojis[computerChoice]);
+
+      const outcome = getResult(userChoice, computerChoice);
+      updateResult(outcome, userChoice, computerChoice);
+    }
+
+    function getComputerChoice() {
+      const choices = ["rock", "paper", "scissors"];
+      return choices[Math.floor(Math.random() * choices.length)];
+    }
+
+    function getResult(user, computer) {
+      if (user === computer) return "draw";
+      if (
+        (user === "rock" && computer === "scissors") ||
+        (user === "paper" && computer === "rock") ||
+        (user === "scissors" && computer === "paper")
+      ) return "win";
+      return "lose";
+    }
+
+    function showHand(id, emoji) {
+      const hand = document.getElementById(id);
+      hand.classList.remove("show");
+      setTimeout(() => {
+        hand.textContent = emoji;
+        hand.classList.add("show");
+      }, 100);
+    }
+
+    function updateResult(result, user, computer) {
+      const resultBox = document.getElementById("result");
+
+      if (result === "win") {
+        userScore++;
+        resultBox.innerHTML = `✅ You win! ${handEmojis[user]} beats ${handEmojis[computer]}`;
+        resultBox.style.color = "#0f0";
+      } else if (result === "lose") {
+        computerScore++;
+        resultBox.innerHTML = `❌ You lose! ${handEmojis[computer]} beats ${handEmojis[user]}`;
+        resultBox.style.color = "#f66";
+      } else {
+        resultBox.innerHTML = `🤝 It's a draw! You both chose ${handEmojis[user]}`;
+        resultBox.style.color = "#fff";
+      }
+
+      document.getElementById("score").textContent = `You: ${userScore} | Computer: ${computerScore}`;
+    }
+  </script>
+
+</body>
+</html>

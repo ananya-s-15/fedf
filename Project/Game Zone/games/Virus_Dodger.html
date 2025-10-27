@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>🦠 Virus Dodger - Level Up</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: sans-serif;
+      background: #111;
+      color: white;
+      text-align: center;
+    }
+
+    #game {
+      position: relative;
+      width: 800px;
+      height: 500px;
+      margin: 40px auto;
+      background: #222;
+      border: 3px solid #fff;
+      overflow: hidden;
+    }
+
+    #player {
+      position: absolute;
+      width: 30px;
+      height: 30px;
+      background: #00ff99;
+      top: 235px;
+      left: 50px;
+      border-radius: 6px;
+    }
+
+    .virus {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: red;
+      border-radius: 50%;
+    }
+
+    #score {
+      font-size: 1.5rem;
+    }
+
+    #gameOver {
+      position: absolute;
+      top: 40%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 2rem;
+      color: #ff4d4d;
+      display: none;
+    }
+
+    #startBtn {
+      margin-top: 15px;
+      padding: 8px 20px;
+      font-size: 1rem;
+      background: #00bfff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    #startBtn:hover {
+      background: #008ecc;
+    }
+
+    .warning {
+      animation: flash 0.2s alternate infinite;
+    }
+
+    @keyframes flash {
+      0% { background-color: #222; }
+      100% { background-color: #441111; }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🦠 Virus Dodger - Level Up</h1>
+  <div id="score">Score: 0</div>
+  <button id="startBtn">Start Game</button>
+
+  <div id="game">
+    <div id="player"></div>
+    <div id="gameOver">💀 Game Over!</div>
+  </div>
+
+  <script>
+    const game = document.getElementById('game');
+    const player = document.getElementById('player');
+    const scoreDisplay = document.getElementById('score');
+    const gameOverText = document.getElementById('gameOver');
+    const startBtn = document.getElementById('startBtn');
+
+    let playerX = 50;
+    let playerY = 235;
+    let keys = {};
+    let viruses = [];
+    let score = 0;
+    let gameRunning = false;
+    let virusSpeed = 2;
+    let spawnInterval, moveInterval, scoreInterval;
+    let spawnRate = 1000;
+
+    document.addEventListener('keydown', e => keys[e.key] = true);
+    document.addEventListener('keyup', e => keys[e.key] = false);
+
+    function movePlayer() {
+      if (keys['ArrowUp'] && playerY > 0) playerY -= 5;
+      if (keys['ArrowDown'] && playerY < 470) playerY += 5;
+      if (keys['ArrowLeft'] && playerX > 0) playerX -= 5;
+      if (keys['ArrowRight'] && playerX < 770) playerX += 5;
+      player.style.top = playerY + 'px';
+      player.style.left = playerX + 'px';
+    }
+
+    function spawnVirus() {
+      const virus = document.createElement('div');
+      virus.classList.add('virus');
+      let y = Math.floor(Math.random() * 480);
+      virus.style.top = y + 'px';
+      virus.style.left = '800px';
+      game.appendChild(virus);
+
+      // Zigzag motion
+      let zigzag = Math.random() > 0.5;
+      viruses.push({ el: virus, x: 800, y: y, zigzag: zigzag, dir: 1 });
+    }
+
+    function moveViruses() {
+      viruses.forEach((v, i) => {
+        v.x -= virusSpeed;
+
+        if (v.zigzag) {
+          v.y += v.dir * 2;
+          if (v.y < 0 || v.y > 480) v.dir *= -1;
+        }
+
+        v.el.style.left = v.x + 'px';
+        v.el.style.top = v.y + 'px';
+
+        // Near miss warning
+        if (
+          Math.abs(v.x - playerX) < 50 &&
+          Math.abs(v.y - playerY) < 50
+        ) {
+          game.classList.add('warning');
+        } else {
+          game.classList.remove('warning');
+        }
+
+        // Collision detection
+        if (
+          v.x < playerX + 30 &&
+          v.x + 20 > playerX &&
+          v.y < playerY + 30 &&
+          v.y + 20 > playerY
+        ) {
+          endGame();
+        }
+
+        if (v.x < -20) {
+          v.el.remove();
+          viruses.splice(i, 1);
+        }
+      });
+    }
+
+    function updateScore() {
+      score++;
+      scoreDisplay.textContent = `Score: ${score}`;
+
+      // Every 10 points, increase difficulty
+      if (score % 10 === 0) {
+        virusSpeed += 0.5;
+        if (spawnRate > 300) {
+          clearInterval(spawnInterval);
+          spawnRate -= 100;
+          spawnInterval = setInterval(spawnVirus, spawnRate);
+        }
+      }
+    }
+
+    function startGame() {
+      gameRunning = true;
+      playerX = 50;
+      playerY = 235;
+      score = 0;
+      virusSpeed = 2;
+      spawnRate = 1000;
+      viruses.forEach(v => v.el.remove());
+      viruses = [];
+      gameOverText.style.display = 'none';
+      scoreDisplay.textContent = 'Score: 0';
+      startBtn.disabled = true;
+      game.classList.remove('warning');
+
+      spawnInterval = setInterval(spawnVirus, spawnRate);
+      moveInterval = setInterval(() => {
+        if (!gameRunning) return;
+        movePlayer();
+        moveViruses();
+      }, 20);
+      scoreInterval = setInterval(updateScore, 1000);
+    }
+
+    function endGame() {
+      gameRunning = false;
+      clearInterval(spawnInterval);
+      clearInterval(moveInterval);
+      clearInterval(scoreInterval);
+      gameOverText.style.display = 'block';
+      startBtn.disabled = false;
+    }
+
+    startBtn.addEventListener('click', startGame);
+  </script>
+</body>
+</html>
